@@ -35,28 +35,112 @@ def slack_post():
 
 @app.route('/lunch', methods=['POST'])
 def lunch_create():
-    # slack_event = json.loads(request)
+    # slack_event = json.loads(request.data)
+    print request.data
 
     text = request.form.get('text').split()
     action = str(text[0]).upper()
     response_message = ''
 
-    print action
-    print text[1]
-
     channel = request.form.get('channel_id')
 
-    if action == 'START':
-        response_message = 'You want to start lunch at ' + text[1]
-    elif action == 'ADD':
-        response_message = 'You want to add '+text[1]+' to the list of options'
-    elif action == 'VOTE':
-        response_message = 'You want to vote on an option'
-    elif action == 'STATUS':
-        response_message = 'You want the status of a lunch'
+    if action == "START":
+        response_message = 'You want to start a lunch for' + text[1]
+        res = slack_client.api_call("chat.postMessage", channel=channel,
+            text=response_message)
 
-    res = slack_client.api_call("chat.postMessage", channel=channel,
-                                text=response_message)
+    elif action == "yum":
+        # Add the message_ts to the user's order info
+        message_action = request.form
+
+        with open('./dialog-templates/vote.json') as json_data:
+            dialog = json.load(json_data,)
+
+    # Show the ordering dialog to the user
+        open_dialog = slack_client.api_call(
+            "dialog.open",
+            trigger_id=message_action["trigger_id"],
+            dialog=dialog
+        )
+
+        # Update the message to show that we're in the process of taking their order
+        slack_client.api_call(
+            "chat.update",
+            channel=["lunch"],
+            ts="in progress message",
+            text=":pencil: Taking your order...",
+            attachments=[]
+        )
+
+    elif action == "yuck":
+        # Add the message_ts to the user's order info
+        message_action = request.form
+
+        with open('./dialog-templates/vote.json') as json_data:
+            dialog = json.load(json_data,)
+
+        # Show the ordering dialog to the user
+        open_dialog = slack_client.api_call(
+            "dialog.open",
+            trigger_id=message_action["trigger_id"],
+            dialog=dialog
+        )
+
+        # Update the message to show that we're in the process of taking their order
+        slack_client.api_call(
+            "chat.update",
+            channel=["lunch"],
+            ts="in progress message",
+            text=":pencil: Taking your order...",
+            attachments=[]
+        )
+
+    elif action == "ADD":
+        response_message = 'You want to add an option'
+        res = slack_client.api_call("chat.postMessage", channel=channel,
+            text=response_message)
+
+    elif action == "BOARD":
+        response_message = 'You want to board an existing train'
+        res = slack_client.api_call("chat.postMessage", channel=channel,
+            text=response_message)
+
+    elif action == "STATUS":
+        response_message = 'You want the status of a lunch'
+        res = slack_client.api_call("chat.postMessage", channel=channel,
+            text=response_message)
+
+    elif action == "REGISTER":
+        response_message = 'You want to register'
+        res = slack_client.api_call("chat.postMessage", channel=channel,
+            text=response_message)
+
+    elif action == "HELP":
+        response_message = 'Available commands:\n' \
+                            'start: start a train\n' \
+                            'add: add a nom\n' \
+                            'board: board a train\n'\
+                            'yum: vote for a nom\n'\
+                            'yuck: vote against a nom\n' \
+                            'status: status of a train\n' \
+                            'register: enroll in the lunch train revolution!\n' \
+                            'help: displays this list of informative commands\n'
+        res = slack_client.api_call("chat.postMessage", channel=channel,
+            text=response_message)
+
+    else:
+        response_message = 'LunchBro does not compute. Try /lunch help for a full list of commands'
+        res = slack_client.api_call("chat.postMessage", channel=channel,
+            text=response_message)
+
+    return Response(), 200
+
+
+@app.route('/dialog', methods=['POST'])
+def dialog_action():
+    slack_event = json.loads(request.form["payload"])
+
+    print slack_event
 
     return Response(), 200
 

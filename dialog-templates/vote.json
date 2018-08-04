@@ -1,0 +1,55 @@
+{
+    "title": "Cast votes!",
+    "submit_label": "Submit",
+    "callback_id": "vote_cast_form",
+    "elements": [
+        {
+            "label": "Restaurant",
+            "type": "select",
+            "name": "restaurant_id",
+            "placeholder": "Select a restaurant",
+            "options": [
+                {
+                    "label": "Cappuccino",
+                    "value": "1"
+                },
+                {
+                    "label": "Latte",
+                    "value": "2"
+                },
+                {
+                    "label": "Pour Over",
+                    "value": "3"
+                },
+                {
+                    "label": "Cold Brew",
+                    "value": "4"
+                }
+            ]
+        },
+        {
+            "label": "# of Votes",
+            "type": "select",
+            "name": "vote_count",
+            "placeholder": "How many votes",
+            "options": [
+                {
+                    "label": "1",
+                    "value": "1"
+                },
+                {
+                    "label": "2",
+                    "value": "2"
+                },
+                {
+                    "label": "3",
+                    "value": "3"
+                },
+                {
+                    "label": "4",
+                    "value": "4"
+                }
+            ]
+        }
+    ]
+}
