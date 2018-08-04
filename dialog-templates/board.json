@@ -1,0 +1,27 @@
+{
+    "title": "All aboard!",
+    "submit_label": "Board",
+    "callback_id": "board",
+    "elements": [
+        {
+            "label": "Trains",
+            "type": "select",
+            "name": "train_id",
+            "placeholder": "Select a Train",
+            "options": [
+                {
+                    "label": "ChewChoo",
+                    "value": "1"
+                },
+                {
+                    "label": "ChewChoo Late AM",
+                    "value": "2"
+                },
+                {
+                    "label": "ChewChoo Early PM",
+                    "value": "3"
+                }
+            ]
+        }
+    ]
+}

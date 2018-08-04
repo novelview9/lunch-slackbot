@@ -1,6 +1,6 @@
 {
-    "title": "Cast votes!",
-    "submit_label": "Submit",
+    "title": "Cast your vote!",
+    "submit_label": "Vote",
     "callback_id": "vote_cast_form",
     "elements": [
         {
