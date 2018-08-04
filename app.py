@@ -35,19 +35,27 @@ def slack_post():
 
 @app.route("/lunch", methods=["POST"])
 def lunch_create():
-    # slack_event = json.loads(request.data)
-    print request.data
 
     text = request.form.get("text").split()
     action = str(text[0]).upper()
-    response_message = ''
+    response_message = ""
 
     channel = request.form.get("channel_id")
+    user_id = request.form.get("user_id")
 
     if action == "START":
-        response_message = "You want to start a lunch for" + text[1]
-        res = slack_client.api_call("chat.postMessage", channel=channel,
-            text=response_message)
+        if len(text) == 2:
+            print text
+            option = text[1]
+            user_name = request.form.get("user_name")
+            response_message = "@%s is starting a lunch train for %s" % (user_name, option)
+            res = slack_client.api_call("chat.postMessage", channel=channel,
+                text=response_message, link_names=1)
+
+        else:
+            response_message = "You did not pass in a time to go to lunch!"
+            res = slack_client.api_call("chat.postEphemeral", channel=channel,
+                text=response_message, user=user_id)
 
     elif action == "YUM":
         # Add the message_ts to the user's order info
@@ -102,8 +110,8 @@ def lunch_create():
         )
 
     elif action == "ADD":
-        response_message = 'You want to add an option'
-        res = slack_client.api_call("chat.postMessage", channel=channel,
+        response_message = "You want to add an option"
+        res = slack_client.api_call("chat.postEphemeral", channel=channel,
             text=response_message)
 
     elif action == "BOARD":
@@ -131,13 +139,13 @@ def lunch_create():
 
     elif action == "STATUS":
         response_message = "You want the status of a lunch"
-        res = slack_client.api_call("chat.postMessage", channel=channel,
-            text=response_message)
+        res = slack_client.api_call("chat.postEphemeral", channel=channel,
+            text=response_message, user=user_id)
 
     elif action == "REGISTER":
         response_message = "You want to register"
-        res = slack_client.api_call("chat.postMessage", channel=channel,
-            text=response_message)
+        res = slack_client.api_call("chat.postEphemeral", channel=channel,
+            text=response_message, user=user_id)
 
     elif action == "HELP":
         response_message = "Available commands:\n" \
@@ -150,8 +158,8 @@ def lunch_create():
                             "register: enroll in the lunch train revolution!\n"\
                             "help: displays this list of informative commands\n"
 
-        res = slack_client.api_call("chat.postMessage", channel=channel,
-            text=response_message)
+        res = slack_client.api_call("chat.postEphemeral", channel=channel,
+            text=response_message, user=user_id)
 
     else:
         response_message = "01110101 01101000 00100000 "\
@@ -159,8 +167,8 @@ def lunch_create():
                            "*Beep boop!* LunchBro does not compute.\n"\
                            "Try /lunch help for a full list of commands"
 
-        res = slack_client.api_call("chat.postMessage", channel=channel,
-            text=response_message)
+        res = slack_client.api_call("chat.postEphemeral", channel=channel,
+            text=response_message, user=user_id)
 
     return Response(), 200
 
@@ -170,16 +178,36 @@ def dialog_action():
     slack_event = json.loads(request.form["payload"])
 
     dialog_callback = slack_event["callback_id"]
+    user_id = slack_event["user"].get("id")
+    channel = slack_event["channel"].get("id")
+
+    print "user id: "+ user_id
 
     if str(dialog_callback).startswith("dialog-vote"):
-        restaurant = slack_event["submission"].get("restaurant_id")
+        restaurant_id = slack_event["submission"].get("restaurant_id")
         vote_count = slack_event["submission"].get("vote_count")
 
-        if dialog_callback == "dialog-vote-yuck":
-            vote_count = int(vote_count) * -1
+        action = "yum"
 
-        print restaurant
-        print vote_count
+        if dialog_callback == "dialog-vote-yuck":
+            message = "you have casted %s votes against" % vote_count
+            vote_count = int(vote_count) * -1
+            action = "yuck"
+
+        else:
+            message = "you have casted %s votes for" % vote_count
+
+
+        print "restaurant choice: " + restaurant_id
+        print "vote count:" + vote_count
+
+        res = slack_client.api_call("chat.postEphemeral", channel=channel,
+        text=message)
+
+    elif str(dialog_callback).startswith("dialog-board-train"):
+        train_id = slack_event["submission"].get("train_id")
+
+        print "train_id: " + train_id
 
     return Response(), 200
 
