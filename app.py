@@ -57,6 +57,7 @@ def lunch_create():
             dialog = json.load(json_data)
 
         dialog["submit_label"] = "Upvote!"
+        dialog["callback_id"] = "dialog-vote-yum"
 
         # Show the ordering dialog to the user
         open_dialog = slack_client.api_call(
@@ -82,8 +83,9 @@ def lunch_create():
             dialog = json.load(json_data)
 
         dialog["submit_label"] = "Downvote!"
+        dialog["callback_id"] = "dialog-vote-yuck"
 
-    # Show the ordering dialog to the user
+        # Show the ordering dialog to the user
         open_dialog = slack_client.api_call(
             "dialog.open",
             trigger_id=message_action["trigger_id"],
@@ -152,7 +154,8 @@ def lunch_create():
             text=response_message)
 
     else:
-        response_message = "01110101 01101000 00100000 01101111 01101000 00100001\n"\
+        response_message = "01110101 01101000 00100000 "\
+                           "01101111 01101000 00100001\n"\
                            "*Beep boop!* LunchBro does not compute.\n"\
                            "Try /lunch help for a full list of commands"
 
@@ -166,7 +169,17 @@ def lunch_create():
 def dialog_action():
     slack_event = json.loads(request.form["payload"])
 
-    print slack_event
+    dialog_callback = slack_event["callback_id"]
+
+    if str(dialog_callback).startswith("dialog-vote"):
+        restaurant = slack_event["submission"].get("restaurant_id")
+        vote_count = slack_event["submission"].get("vote_count")
+
+        if dialog_callback == "dialog-vote-yuck":
+            vote_count = int(vote_count) * -1
+
+        print restaurant
+        print vote_count
 
     return Response(), 200
 
