@@ -1,7 +1,8 @@
 import os
 import json
 
-# hash things to ensure only valid requests from slack are processed
+# hash things to ensure only valid requests
+# from slack are processed
 import hashlib
 import hmac
 
@@ -24,6 +25,9 @@ slack_client = SlackClient(BOT_OAUTH)
 
 app = Flask(__name__)
 
+
+# any message that starts with /lunch will
+# enter in here
 @app.route("/lunch", methods=["POST"])
 def lunch_create():
 
@@ -58,15 +62,16 @@ def lunch_create():
             # todo: POST route to create a new game
 
             # post a message back to the channel
-            response_message = "@%s is starting a lunch train for %s" % (user_name, time)
+            response_message = "@%s is starting a lunch train for %s" %\
+                               (user_name, time)
             slack_client.api_call("chat.postMessage", channel=channel,
                 text=response_message, link_names=1)
 
         else:
             # user did not pass in a lunch time
             response_message = "You did not pass in a time to go to lunch!"
-            res = slack_client.api_call("chat.postEphemeral", channel=channel,
-                text=response_message, user=user_id)
+            res = slack_client.api_call("chat.postEphemeral",
+                channel=channel, text=response_message, user=user_id)
 
     # user wants to upvote a restaurant choice
     elif action == "YUM":
