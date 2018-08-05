@@ -1,16 +1,22 @@
 import os
 import random
 import json
+import hashlib
+import hmac
 from flask import Flask, request, make_response, Response
 from slackclient import SlackClient
 
 BOT_OAUTH = os.environ.get("BOT_OAUTH", None)
+SIGNING_SECRET = os.environ.get("SIGNING_SECRET", None)
+slack_client = SlackClient(BOT_OAUTH)
 
 app = Flask(__name__)
-slack_client = SlackClient(BOT_OAUTH)
 
 @app.route("/lunch", methods=["POST"])
 def lunch_create():
+
+    if not valid_request(request.headers, request.get_data()):
+        return Response(), 401
 
     text = request.form.get("text").split()
     action = str(text[0]).upper()
@@ -241,6 +247,20 @@ def slack_post():
 @app.route("/", methods=["GET"])
 def test():
     return Response("It works!")
+
+
+def valid_request(headers, body):
+    timestamp = str(headers['X-Slack-Request-Timestamp'])
+    version_number = "v0"
+    signature = str(headers['X-Slack-Signature'])
+
+    request_string = version_number + ":" + timestamp + ":" + str(body)
+
+    server_signature = version_number + '=' + \
+        hmac.new(SIGNING_SECRET, request_string, hashlib.sha256)\
+        .hexdigest()
+
+    return signature == server_signature
 
 
 if __name__ == "__main__":
