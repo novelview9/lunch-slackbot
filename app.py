@@ -21,12 +21,20 @@ def lunch_create():
 
     if action == "START":
         if len(text) == 2:
-            print text
-            option = text[1]
+            time = text[1]
             user_name = request.form.get("user_name")
-            response_message = "@%s is starting a lunch train for %s" % (user_name, option)
-            res = slack_client.api_call("chat.postMessage", channel=channel,
+
+            response_message = "@%s is starting a lunch train for %s" % (user_name, time)
+            slack_client.api_call("chat.postMessage", channel=channel,
                 text=response_message, link_names=1)
+
+            remind_message = "/remind me to go to lunch at 8:00pm"
+
+            slack_client.api_call("chat.postEphemeral",
+                channel=channel,
+                text=remind_message,
+                link_names=1,
+                user=user_id)
 
         else:
             response_message = "You did not pass in a time to go to lunch!"
@@ -95,7 +103,7 @@ def lunch_create():
         message_action = request.form
 
         with open("./dialog-templates/board.json") as json_data:
-            dialog = json.load(json_data,)
+            dialog = json.load(json_data)
 
         # Show the ordering dialog to the user
         open_dialog = slack_client.api_call(
@@ -123,6 +131,11 @@ def lunch_create():
         res = slack_client.api_call("chat.postEphemeral", channel=channel,
             text=response_message, user=user_id)
 
+    elif action == "VOTES":
+        response_message = "You have 12,345 votes remaining."
+        res = slack_client.api_call("chat.postEphemeral", channel=channel,
+            text=response_message, user=user_id)
+
     elif action == "HELP":
         response_message = "Available commands:\n"\
             "start: start a train\n"\
@@ -132,16 +145,30 @@ def lunch_create():
             "yuck: vote against a nom\n"\
             "status: status of a train\n"\
             "register: enroll in the lunch train revolution!\n"\
+            "votes: displays your vote balance\n"\
             "help: displays this list of informative commands\n"
 
         res = slack_client.api_call("chat.postEphemeral", channel=channel,
             text=response_message, user=user_id)
 
+    elif action == "LIST":
+
+        users = slack_client.api_call("users.list")["members"]
+
+        # print users
+
+        wanted_keys = ['id', 'name', 'real_name'] # The keys you want
+        for thing in users:
+            print thing["name"]
+            print thing["id"]
+            print thing["real_name"]
+            print ""
+
     else:
         response_message = "01110101 01101000 00100000 "\
-                           "01101111 01101000 00100001\n"\
-                           "*Beep boop!* LunchBro does not compute.\n"\
-                           "Try /lunch help for a full list of commands"
+            "01101111 01101000 00100001\n"\
+            "*Beep boop!* LunchBro does not compute.\n"\
+            "Try /lunch help for a full list of commands"
 
         res = slack_client.api_call("chat.postEphemeral", channel=channel,
             text=response_message, user=user_id)
