@@ -9,30 +9,6 @@ BOT_OAUTH = os.environ.get("BOT_OAUTH", None)
 app = Flask(__name__)
 slack_client = SlackClient(BOT_OAUTH)
 
-
-@app.route("/bot", methods=["POST"])
-def slack_post():
-    slack_event = json.loads(request.data)
-    if "challenge" in slack_event:
-        return make_response(slack_event["challenge"], 200,
-                    {"content_type": "application/json"
-        })
-
-    user_check = slack_event["event"].get("user")
-
-    # if request.form["token"] == SLACK_WEBHOOK_SECRET:
-    if user_check is not None:
-        print slack_event
-        channel = slack_event["event"]["channel"]
-        username = slack_event["event"]["user"]
-        response_message = username + " in " + channel + " says: "
-
-        res = slack_client.api_call("chat.postMessage", channel=channel,
-            text=response_message)
-
-    return Response(), 200
-
-
 @app.route("/lunch", methods=["POST"])
 def lunch_create():
 
@@ -112,7 +88,7 @@ def lunch_create():
     elif action == "ADD":
         response_message = "You want to add an option"
         res = slack_client.api_call("chat.postEphemeral", channel=channel,
-            text=response_message)
+            text=response_message, user=user_id)
 
     elif action == "BOARD":
         # Add the message_ts to the user's order info
@@ -148,15 +124,15 @@ def lunch_create():
             text=response_message, user=user_id)
 
     elif action == "HELP":
-        response_message = "Available commands:\n" \
-                            "start: start a train\n" \
-                            "add: add a nom\n"\
-                            "board: board a train\n"\
-                            "yum: vote for a nom\n"\
-                            "yuck: vote against a nom\n"\
-                            "status: status of a train\n"\
-                            "register: enroll in the lunch train revolution!\n"\
-                            "help: displays this list of informative commands\n"
+        response_message = "Available commands:\n"\
+            "start: start a train\n"\
+            "add: add a nom\n"\
+            "board: board a train\n"\
+            "yum: vote for a nom\n"\
+            "yuck: vote against a nom\n"\
+            "status: status of a train\n"\
+            "register: enroll in the lunch train revolution!\n"\
+            "help: displays this list of informative commands\n"
 
         res = slack_client.api_call("chat.postEphemeral", channel=channel,
             text=response_message, user=user_id)
@@ -190,24 +166,47 @@ def dialog_action():
         action = "yum"
 
         if dialog_callback == "dialog-vote-yuck":
-            message = "you have casted %s votes against" % vote_count
+            message = "You have casted %s negative votes!" % vote_count
             vote_count = int(vote_count) * -1
             action = "yuck"
 
         else:
-            message = "you have casted %s votes for" % vote_count
+            message = "You have casted %s votes!" % vote_count
 
 
         print "restaurant choice: " + restaurant_id
-        print "vote count:" + vote_count
+        print "vote count:" + str(vote_count)
 
         res = slack_client.api_call("chat.postEphemeral", channel=channel,
-        text=message)
+            text=message, user=user_id)
 
     elif str(dialog_callback).startswith("dialog-board-train"):
         train_id = slack_event["submission"].get("train_id")
 
         print "train_id: " + train_id
+
+    return Response(), 200
+
+
+@app.route("/bot", methods=["POST"])
+def slack_post():
+    slack_event = json.loads(request.data)
+    if "challenge" in slack_event:
+        return make_response(slack_event["challenge"], 200,
+                             {"content_type": "application/json"
+                              })
+
+    user_check = slack_event["event"].get("user")
+
+    # if request.form["token"] == SLACK_WEBHOOK_SECRET:
+    if user_check is not None:
+        print slack_event
+        channel = slack_event["event"]["channel"]
+        username = slack_event["event"]["user"]
+        response_message = username + " in " + channel + " says: "
+
+        res = slack_client.api_call("chat.postMessage", channel=channel,
+                                    text=response_message)
 
     return Response(), 200
 
